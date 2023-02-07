@@ -48,6 +48,7 @@ class TrajectorySH(object):
                 state = int(rho0)
                 self.rho = np.zeros([model.nstates(), model.nstates()], dtype=np.complex128)
                 self.rho[state, state] = 1.0
+
                 self.state = state
             except:
                 raise Exception("Unrecognized initial state option")
@@ -169,7 +170,7 @@ class TrajectorySH(object):
         """
         if self.duration["box_bounds"] is None:
             return False
-        return np.all(self.duration["box_bounds"][0] < self.position) and np.all(
+        return np.all(self.duration["box_bounds"][0] <= self.position) and np.all(
             self.position < self.duration["box_bounds"][1])
 
     def duration_initialize(self, options: Dict[str, Any]) -> None:
@@ -497,12 +498,11 @@ class TrajectorySH(object):
 
         gkndt = 2.0 * np.imag(self.rho[self.state, :] * H[:, self.state]) * self.dt / np.real(self.rho[self.state,
                                                                                                        self.state])
-
+        gkndt = 1 - np.exp(-np.abs(gkndt)) 
         # zero out 'self-hop' for good measure (numerical safety)
         gkndt[self.state] = 0.0
-
         # clip probabilities to make sure they are between zero and one
-        gkndt = np.maximum(gkndt, 0.0)
+        # gkndt = np.maximum(gkndt, 0.0)
 
         hop_targets = self.hopper(gkndt)
         if hop_targets:
@@ -524,7 +524,6 @@ class TrajectorySH(object):
         else:
             raise Exception("Unrecognized option for hopping_probability")
         self.hopping = np.sum(probs).item()  # store total hopping probability
-
         self.zeta = self.draw_new_zeta()
         acc_prob = np.cumsum(probs)
         hops = np.less(self.zeta, acc_prob)

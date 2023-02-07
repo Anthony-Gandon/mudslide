@@ -89,6 +89,53 @@ class TrajGenNormal(object):
                 continue
             yield (x, k, self.initial_state, {"seed_sequence": seedseqs[i]})
 
+class TrajGenNormal_mod(object):
+    """Canned class whose call function acts as a generator for normally distributed initial conditions"""
+
+    def __init__(self,
+                 position: ArrayLike,
+                 momentum: ArrayLike,
+                 initial_state: Any,
+                 sigma: ArrayLike,
+                 seed: Any = None,
+                 seed_traj: Any = None):
+        """
+        :param position: center of normal distribution for position
+        :param momentum: center of normal distribution for momentum
+        :param initial_state: initial state designation
+        :param sigma: standard deviation of distribution
+        :param seed: initial seed to give to trajectory
+        """
+        self.position = position
+        self.xref = position[6]
+        self.position_deviation = 0.5 * sigma
+        self.momentum = momentum
+        self.kref = momentum[6]
+        self.momentum_deviation = 1.0 / sigma
+        self.initial_state = initial_state
+        self.seed_sequence = np.random.SeedSequence(seed)
+        self.random_state = np.random.default_rng(seed_traj)
+
+    def kskip(self, ktest: float) -> bool:
+        """Whether to skip given momentum
+        :param ktest: momentum
+
+        :returns: True/False
+        """
+        return np.any(ktest < 0.0)
+
+    def __call__(self, nsamples: int) -> Iterator:
+        """Generate nsamples initial conditions
+        :param nsamples: number of initial conditions requested
+        """
+        seedseqs = self.seed_sequence.spawn(nsamples)
+        for i in range(nsamples):
+            x = self.position
+            x[6] = self.random_state.normal(self.xref, self.position_deviation)
+            k = self.momentum
+            k[6] = self.random_state.normal(self.kref, self.momentum_deviation)
+            yield (x, k, self.initial_state, {"seed_sequence": seedseqs[i]})
+
 
 class TrajGenBoltzmann(object):
     """Generate momenta randomly according to the Boltzmann distribution"""

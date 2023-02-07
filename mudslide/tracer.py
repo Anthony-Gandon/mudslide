@@ -90,15 +90,15 @@ class Trace_(object):
         last_snapshot = self[-1]
         ndim = len(last_snapshot["position"])
         nst = len(last_snapshot["density_matrix"])
-        position = last_snapshot["position"][0]
+        position = last_snapshot["position"]
         active = last_snapshot["active"]
 
         out = np.zeros([nst, 2], dtype=np.float64)
 
-        if ndim != 1:
-            return out
+        # if ndim != 1:
+        #     return out
 
-        lr = 0 if position < 0.0 else 1
+        lr = 0 if position[6] < 1.0 else 1
         # first bit is left (0) or right (1), second bit is electronic state
         out[active, lr] = 1.0
 
@@ -321,7 +321,6 @@ class TraceManager(object):
 
     def __init__(self, TraceType=InMemoryTrace, trace_args=[], trace_kwargs={}) -> None:
         self.TraceType = TraceType
-
         self.trace_args = trace_args
         self.trace_kwargs = trace_kwargs
 
