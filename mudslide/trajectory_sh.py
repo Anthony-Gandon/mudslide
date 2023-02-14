@@ -498,11 +498,11 @@ class TrajectorySH(object):
 
         gkndt = 2.0 * np.imag(self.rho[self.state, :] * H[:, self.state]) * self.dt / np.real(self.rho[self.state,
                                                                                                        self.state])
-        gkndt = 1 - np.exp(-np.abs(gkndt)) 
         # zero out 'self-hop' for good measure (numerical safety)
         gkndt[self.state] = 0.0
         # clip probabilities to make sure they are between zero and one
-        # gkndt = np.maximum(gkndt, 0.0)
+        gkndt = np.maximum(gkndt, 0.0)
+        gkndt = 1 - np.exp(-gkndt) 
 
         hop_targets = self.hopper(gkndt)
         if hop_targets:
@@ -583,7 +583,6 @@ class TrajectorySH(object):
         while (True):
             # first update nuclear coordinates
             self.advance_position(last_electronics, self.electronics)
-
             # calculate electronics at new position
             last_electronics, self.electronics = self.electronics, self.electronics.update(self.position)
 

@@ -111,7 +111,7 @@ class TrajGenNormal_mod(object):
         self.position_deviation = 0.5 * sigma
         self.momentum = momentum
         self.kref = momentum[6]
-        self.momentum_deviation = 1.0 / sigma
+        self.momentum_deviation = 0 # 1.0 / sigma
         self.initial_state = initial_state
         self.seed_sequence = np.random.SeedSequence(seed)
         self.random_state = np.random.default_rng(seed_traj)
@@ -122,7 +122,7 @@ class TrajGenNormal_mod(object):
 
         :returns: True/False
         """
-        return np.any(ktest < 0.0)
+        return False # np.any(ktest < 0.0)
 
     def __call__(self, nsamples: int) -> Iterator:
         """Generate nsamples initial conditions
@@ -267,10 +267,14 @@ class BatchedTraj(object):
                                    **traj_input)
             traj_queue.put(traj)
 
+        ii = 0
         while not traj_queue.empty():
+            if ii%100 == 0:
+                print(f"Traj {ii} out of {nsamples}.")
             traj = traj_queue.get()
             results = traj.simulate()
             results_queue.put(results)
+            ii+=1
 
         #traj_queue.join()
         #for p in procs:
